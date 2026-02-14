@@ -1,0 +1,33 @@
+# Dependências
+node_modules/
+
+# Variáveis de ambiente
+.env
+
+# Credenciais Google Cloud
+config/service-account.json
+
+# Imagens baixadas (geradas em runtime)
+obras/
+
+# Banco de dados
+db.sql
+
+# Logs
+npm-debug.log
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporários
+_fix_schema.js
+scripts/

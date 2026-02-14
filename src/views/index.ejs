@@ -1,0 +1,118 @@
+<%- include('partials/head', { title: 'Leitor - Obras' }) %>
+
+  <main class="container py-4">
+    <!-- Breadcrumb -->
+    <div class="leitor-breadcrumb">
+      <i class="bi bi-house-fill"></i>
+      <span class="bc-current">Obras</span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1" style="font-weight:700; color:var(--text-primary)">Obras</h1>
+        <p class="mb-0" style="font-size:0.85rem; color:var(--text-muted)">Gerencie suas obras e capítulos</p>
+      </div>
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addObraModal">
+        <i class="bi bi-plus-lg me-1"></i> Nova obra
+      </button>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="row mb-4">
+      <div class="col-md-6 col-lg-5">
+        <div class="search-input-wrap">
+          <i class="bi bi-search search-icon"></i>
+          <input type="text" id="searchObras" class="form-control" placeholder="Buscar obras..." autocomplete="off" />
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-7 d-flex align-items-center justify-content-end">
+        <span style="font-size:0.78rem; color:var(--text-muted)">
+          <i class="bi bi-collection me-1"></i><%= obras ? obras.length : 0 %> obra(s) nesta página
+        </span>
+      </div>
+    </div>
+
+    <!-- Obras Grid -->
+    <section id="lista-obras">
+      <% if (obras && obras.length) { %>
+        <div class="obra-grid" id="obraGrid">
+          <% obras.forEach(function(o, idx){ %>
+            <div class="card obra-card animate-in animate-delay-<%= Math.min(idx % 4 + 1, 4) %>" data-obra-title="<%= o.title.toLowerCase() %>" data-obra-slug="<%= o.slug %>">
+              <div class="obra-card-thumb" onclick="location.href='/obra/<%= o.id %>'">
+                <i class="bi bi-journal-richtext"></i>
+              </div>
+              <div class="obra-card-body">
+                <a href="/obra/<%= o.id %>" class="obra-card-title" title="<%= o.title %>"><%= o.title %></a>
+                <div class="obra-card-slug" title="<%= o.slug %>"><%= o.slug %></div>
+                <div class="obra-card-actions">
+                  <a class="btn btn-sm btn-primary flex-grow-1 text-center" href="/obra/<%= o.id %>">
+                    <i class="bi bi-folder2-open me-1"></i>Abrir
+                  </a>
+                  <button class="btn btn-sm btn-icon btn-outline-danger btn-delete-obra" data-obra-id="<%= o.id %>" title="Excluir">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- No results message (hidden by default) -->
+        <div id="noSearchResults" class="empty-state" style="display:none">
+          <div class="empty-icon"><i class="bi bi-search"></i></div>
+          <div class="empty-title">Nenhuma obra encontrada</div>
+          <div class="empty-desc">Tente ajustar o termo de busca</div>
+        </div>
+      <% } else { %>
+        <div class="empty-state animate-in">
+          <div class="empty-icon"><i class="bi bi-journal-plus"></i></div>
+          <div class="empty-title">Nenhuma obra cadastrada</div>
+          <div class="empty-desc">Comece adicionando sua primeira obra clicando no botão "Nova obra" acima</div>
+        </div>
+      <% } %>
+
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <nav class="leitor-pagination">
+          <% if (currentPage > 1) { %>
+            <a class="page-link" href="/?page=<%= currentPage - 1 %>&limit=<%= limit %>">
+              <i class="bi bi-chevron-left me-1"></i>Anterior
+            </a>
+          <% } %>
+          <span class="page-info">Página <%= currentPage %> de <%= totalPages %></span>
+          <% if (currentPage < totalPages) { %>
+            <a class="page-link" href="/?page=<%= currentPage + 1 %>&limit=<%= limit %>">
+              Próxima<i class="bi bi-chevron-right ms-1"></i>
+            </a>
+          <% } %>
+        </nav>
+      <% } %>
+    </section>
+  </main>
+
+  <!-- Add Obra Modal -->
+  <div class="modal fade" id="addObraModal" tabindex="-1" aria-labelledby="addObraModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addObraModalLabel"><i class="bi bi-plus-circle me-2"></i>Nova Obra</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <form id="form-new-obra">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold">Título da obra</label>
+              <input class="form-control" type="text" name="title" placeholder="Ex: My Hero Academia" required autofocus />
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" form="form-new-obra" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Criar obra</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <%- include('partials/footer') %>
+  <%- include('partials/scripts') %>

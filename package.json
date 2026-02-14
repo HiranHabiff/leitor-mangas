@@ -1,0 +1,35 @@
+{
+  "name": "leitor-mangas",
+  "version": "0.1.0",
+  "description": "Sistema de download, tradução e leitura de mangás/manhwas - Etapa 1 scaffold",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "NODE_ENV=development node src/app.js",
+    "migrate": "npx sequelize-cli db:migrate",
+    "test": "jest --runInBand --detectOpenHandles"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "@google-cloud/translate": "^9.2.1",
+    "@google-cloud/vision": "^5.3.4",
+    "axios": "^1.0.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.0.0",
+    "ejs": "^3.1.9",
+    "express": "^4.18.0",
+    "mysql2": "^3.0.0",
+    "sequelize": "^6.32.1",
+    "slugify": "^1.6.6"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "sequelize-cli": "^6.6.0",
+    "sharp": "^0.34.5"
+  }
+}

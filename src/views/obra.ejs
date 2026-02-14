@@ -1,0 +1,319 @@
+<%- include('partials/head', { title: obra.title }) %>
+
+  <main class="container py-4">
+    <!-- Breadcrumb -->
+    <div class="leitor-breadcrumb">
+      <a href="/"><i class="bi bi-house-fill"></i></a>
+      <span class="bc-separator">/</span>
+      <a href="/">Obras</a>
+      <span class="bc-separator">/</span>
+      <span class="bc-current"><%= obra.title %></span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 animate-in">
+      <div>
+        <h1 class="h3 mb-1" style="font-weight:700; color:var(--text-primary)"><%= obra.title %></h1>
+        <p class="mb-0" style="font-size:0.82rem; color:var(--text-muted); font-family:var(--font-mono)"><%= obra.slug %></p>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-ghost" href="/">
+          <i class="bi bi-arrow-left me-1"></i>Voltar
+        </a>
+        <button class="btn btn-sm btn-outline-danger btn-delete-obra" data-obra-id="<%= obra.id %>">
+          <i class="bi bi-trash3 me-1"></i>Excluir
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Dashboard -->
+    <%
+      let totalCaps = (obra.Capitulos || []).length;
+      let totalImgs = 0, totalDown = 0, totalFailed = 0, totalExtracted = 0, totalTranslated = 0;
+      (obra.Capitulos || []).forEach(function(c) {
+        const s = (c.dataValues && c.dataValues._status) || {};
+        totalImgs += s.total || 0;
+        totalDown += s.downloaded || 0;
+        totalFailed += s.failed || 0;
+        const e = (c.dataValues && c.dataValues._extractions) || {};
+        totalExtracted += e.imagesWithExtractions || 0;
+        const t = (c.dataValues && c.dataValues._translations) || {};
+        totalTranslated += t.imagesWithTranslations || 0;
+      });
+    %>
+    <div class="summary-bar animate-in animate-delay-1">
+      <div class="summary-item">
+        <div class="summary-value"><%= totalCaps %></div>
+        <div class="summary-label">Capítulos</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value"><%= totalImgs %></div>
+        <div class="summary-label">Imagens</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--success)"><%= totalDown %></div>
+        <div class="summary-label">Baixadas</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--info)"><%= totalExtracted %></div>
+        <div class="summary-label">Extraídas</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color:var(--accent)"><%= totalTranslated %></div>
+        <div class="summary-label">Traduzidas</div>
+      </div>
+    </div>
+
+    <!-- Chapter list -->
+    <section id="capitulos" data-obra-id="<%= obra.id %>" class="animate-in animate-delay-3">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0" style="font-weight:700; color:var(--text-primary)">Capítulos</h2>
+        <span style="font-size:0.78rem; color:var(--text-muted)"><%= totalCaps %> capítulo(s)</span>
+      </div>
+
+      <% if (obra.Capitulos && obra.Capitulos.length) { %>
+        <div class="d-flex flex-column gap-3">
+        <% obra.Capitulos.forEach(function(cap, capIdx){ %>
+          <% const imagens = cap.Imagens || cap.Imagems || (cap.dataValues && (cap.dataValues.Imagens || cap.dataValues.Imagems)) || []; %>
+          <div class="card cap-card">
+            <div class="card-body">
+              <div class="cap-header">
+                <div class="flex-grow-1">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <button class="btn btn-sm btn-link p-0 cap-toggle" data-bs-toggle="collapse" data-bs-target="#cap-imgs-<%= cap.id %>" aria-expanded="false" aria-controls="cap-imgs-<%= cap.id %>" style="color:var(--text-muted)">
+                      <i class="bi bi-caret-down-fill"></i>
+                    </button>
+                    <span class="cap-number">Cap. <%= cap.number || cap.id %></span>
+
+                    <%
+                      const _status = cap.dataValues && cap.dataValues._status ? cap.dataValues._status : { total:0, downloaded:0, pending:0, failed:0 };
+                      const _ext = cap.dataValues && cap.dataValues._extractions ? cap.dataValues._extractions : { imagesWithExtractions:0, allExtracted:false };
+                      const _tr = cap.dataValues && cap.dataValues._translations ? cap.dataValues._translations : { imagesWithTranslations:0, allTranslated:false };
+                      const s = _status;
+                      const total = s.total || 0;
+                      const downloaded = s.downloaded || 0;
+                      const pending = s.pending || 0;
+                      const failed = s.failed || 0;
+                    %>
+
+                    <!-- Status badges -->
+                    <% if (total === 0) { %>
+                      <span class="status-badge badge-muted"><i class="bi bi-dash"></i> Sem imagens</span>
+                    <% } else if (downloaded === total && failed === 0) { %>
+                      <span class="status-badge badge-success"><i class="bi bi-check-circle-fill"></i> <%= downloaded %>/<%= total %></span>
+                    <% } else if (failed > 0) { %>
+                      <span class="status-badge badge-danger"><i class="bi bi-x-circle-fill"></i> <%= failed %> falha(s)</span>
+                    <% } else if (pending > 0 || downloaded < total) { %>
+                      <span class="status-badge badge-warning"><i class="bi bi-clock-fill"></i> <%= downloaded %>/<%= total %></span>
+                    <% } %>
+
+                    <!-- Pipeline status badge -->
+                    <% const ps = cap.pipelineStatus || 'idle'; %>
+                    <% if (ps === 'downloading') { %>
+                      <span class="status-badge badge-warning"><i class="bi bi-cloud-arrow-down-fill"></i> Baixando…</span>
+                    <% } else if (ps === 'extracting') { %>
+                      <span class="status-badge badge-info"><i class="bi bi-cpu-fill"></i> Extraindo…</span>
+                    <% } else if (ps === 'error') { %>
+                      <span class="status-badge badge-danger"><i class="bi bi-exclamation-triangle-fill"></i> Pipeline erro</span>
+                    <% } else if (ps === 'done') { %>
+                      <span class="status-badge badge-success"><i class="bi bi-check-all"></i> Pipeline OK</span>
+                    <% } %>
+
+                    <% if (_ext.allExtracted) { %>
+                      <span class="status-badge badge-info"><i class="bi bi-file-earmark-check"></i> Extraído</span>
+                    <% } else if (_ext.imagesWithExtractions > 0) { %>
+                      <span class="status-badge badge-info"><i class="bi bi-file-earmark-text"></i> Parcial</span>
+                    <% } %>
+
+                    <% if (_tr.allTranslated) { %>
+                      <span class="status-badge badge-success"><i class="bi bi-translate"></i> Traduzido</span>
+                    <% } else if (_tr.imagesWithTranslations > 0) { %>
+                      <span class="status-badge badge-warning"><i class="bi bi-translate"></i> Parcial</span>
+                    <% } %>
+                  </div>
+
+                  <div class="cap-link">
+                    <a href="<%= cap.link %>" target="_blank" style="color:var(--text-muted); font-size:0.75rem"><i class="bi bi-link-45deg me-1"></i><%= cap.link %></a>
+                  </div>
+
+                  <!-- Progress bar -->
+                  <% const pct = total ? Math.round((downloaded / total) * 100) : 0; const pctStr = pct + '%'; %>
+                  <% if (pending > 0 || (downloaded < total && total > 0)) { %>
+                    <div class="mt-2" style="max-width:280px;">
+                      <div class="progress progress-lg" id="progress-wrap-<%= cap.id %>">
+                        <div id="progress-<%= cap.id %>" class="progress-bar with-label" role="progressbar" style="width:<%= pctStr %>"><%= pctStr %></div>
+                      </div>
+                    </div>
+                  <% } else { %>
+                    <div class="mt-2 d-none" style="max-width:280px;">
+                      <div class="progress progress-lg" id="progress-wrap-<%= cap.id %>">
+                        <div id="progress-<%= cap.id %>" class="progress-bar with-label" role="progressbar" style="width:<%= pctStr %>"><%= pctStr %></div>
+                      </div>
+                    </div>
+                  <% } %>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex align-items-start gap-2 flex-shrink-0">
+                  <div id="cap-controls-<%= cap.id %>" class="d-flex flex-wrap gap-1 align-items-center">
+                    <% if (_ext.allExtracted && !_tr.allTranslated) { %>
+                      <select class="form-select form-select-sm cap-lang-select" data-cap-id="<%= cap.id %>" style="width:100px; font-size:0.75rem">
+                        <option value="pt-BR" selected>pt-BR</option>
+                        <option value="pt">pt</option>
+                        <option value="en">en</option>
+                        <option value="es">es</option>
+                      </select>
+                      <button class="btn btn-sm btn-ghost btn-translate-cap" data-cap-id="<%= cap.id %>" title="Traduzir capítulo">
+                        <i class="bi bi-translate me-1"></i>Traduzir
+                      </button>
+                    <% } %>
+
+                    <% if (_status.total > 0 && _status.downloaded === 0) { %>
+                      <button class="btn btn-sm btn-success btn-download" data-cap-id="<%= cap.id %>">
+                        <i class="bi bi-download me-1"></i>Download
+                      </button>
+                    <% } else if (_status.failed > 0) { %>
+                      <button class="btn btn-sm btn-warning btn-retry" data-cap-id="<%= cap.id %>">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Retry
+                      </button>
+                    <% } %>
+
+                    <% if (_status.total > 0 && _status.downloaded === _status.total && _status.failed === 0 && !_ext.allExtracted) { %>
+                      <button class="btn btn-sm btn-ghost btn-extract-cap" data-cap-id="<%= cap.id %>">
+                        <i class="bi bi-cpu me-1"></i>Extrair
+                      </button>
+                    <% } %>
+                  </div>
+
+                  <a class="btn btn-sm <%= cap.isRead ? 'btn-secondary' : 'btn-primary' %> btn-read-cap" href="/obra/<%= obra.id %>/cap/<%= cap.id %>/reader" title="Ler capítulo" data-cap-id="<%= cap.id %>">
+                    <i class="bi bi-book me-1"></i><%= cap.isRead ? 'Lido' : 'Ler' %>
+                  </a>
+
+                  <button class="btn btn-sm btn-icon btn-outline-danger btn-delete-cap" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Excluir capítulo">
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Hidden status/icon elements for JS -->
+              <div id="status-icon-<%= cap.id %>" class="d-none">
+                <span class="cap-main-icon">
+                <% if (total === 0) { %>
+                  <i class="bi bi-dash text-muted"></i>
+                <% } else if (pending > 0 || (downloaded < total && total > 0)) { %>
+                <% } else if (failed > 0) { %>
+                  <i class="bi bi-x-circle-fill text-danger"></i>
+                <% } else if (downloaded === total) { %>
+                  <i class="bi bi-check-circle-fill text-success"></i>
+                <% } else { %>
+                  <i class="bi bi-dash text-muted"></i>
+                <% } %>
+                </span>
+                <span class="cap-ext-icons">
+                <% if ((_ext || {}).allExtracted) { %>
+                  <i class="bi bi-file-earmark-fill text-info ms-2" title="Extraído"></i>
+                <% } else if (_ext.imagesWithExtractions > 0) { %>
+                  <i class="bi bi-file-earmark-text text-info ms-2" title="Extrações parciais"></i>
+                <% } %>
+                <% if ((_tr || {}).allTranslated) { %>
+                  <i class="bi bi-translate text-success ms-2" title="Traduzido"></i>
+                <% } else if (_tr.imagesWithTranslations > 0) { %>
+                  <i class="bi bi-translate text-warning ms-2" title="Traduções parciais"></i>
+                <% } %>
+                </span>
+              </div>
+            </div>
+
+            <!-- Collapsible image list -->
+            <div class="card-footer p-0">
+              <div class="collapse cap-collapse" id="cap-imgs-<%= cap.id %>">
+                <% if (imagens && imagens.length) { %>
+                  <ul class="list-group list-group-flush cap-img-list">
+                    <% imagens.forEach(function(img){ %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                      <div style="min-width:0; flex:1">
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="img-status">
+                            <% if (img.status === 'downloaded') { %>
+                              <i class="bi bi-check-circle-fill text-success" title="baixado"></i>
+                            <% } else if (img.status === 'failed') { %>
+                              <i class="bi bi-x-circle-fill text-danger" title="falha"></i>
+                            <% } else if (img.status === 'pending') { %>
+                              <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                            <% } else { %>
+                              <i class="bi bi-dash text-muted"></i>
+                            <% } %>
+                          </span>
+                          <strong style="font-size:0.78rem">#<%= img.order %></strong>
+                          <span class="img-status-text" style="font-size:0.72rem; color:var(--text-muted)"><%= img.status %></span>
+                          <span id="img-extraction-status-<%= img.id %>" style="font-size:0.72rem; color:var(--info)">Ex: -</span>
+                          <span id="img-translation-status-<%= img.id %>" style="font-size:0.72rem; color:var(--info)">Tr: -</span>
+                        </div>
+                        <div style="font-size:0.7rem; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:50ch;">
+                          <a href="<%= img.url %>" target="_blank" rel="noopener noreferrer" style="color:var(--text-muted)"><%= img.url %></a>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center gap-1 flex-shrink-0">
+                        <% const imgExtracted = img.dataValues && img.dataValues._extracted; %>
+                        <% const imgTranslated = img.dataValues && img.dataValues._translated; %>
+                        <% if (img.status === 'failed') { %>
+                          <button class="btn btn-sm btn-ghost btn-retry-img" data-img-id="<%= img.id %>" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Retry">
+                            <i class="bi bi-arrow-clockwise"></i>
+                          </button>
+                        <% } else if (img.status === 'downloaded' && !imgExtracted) { %>
+                          <button class="btn btn-sm btn-ghost btn-extract-img" data-img-id="<%= img.id %>" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Extrair">
+                            <i class="bi bi-cpu"></i>
+                          </button>
+                        <% } else if (imgExtracted && !imgTranslated) { %>
+                          <button class="btn btn-sm btn-ghost btn-translate-img" data-img-id="<%= img.id %>" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Traduzir">
+                            <i class="bi bi-translate"></i>
+                          </button>
+                        <% } %>
+                        <button class="btn btn-sm btn-ghost btn-view-extractions" data-img-id="<%= img.id %>" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Ver extrações">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-icon btn-outline-danger btn-delete-img" data-img-id="<%= img.id %>" data-cap-id="<%= cap.id %>" data-obra-id="<%= obra.id %>" title="Excluir">
+                          <i class="bi bi-trash3"></i>
+                        </button>
+                      </div>
+                    </li>
+                    <% }); %>
+                  </ul>
+                <% } else { %>
+                  <div class="p-3" style="color:var(--text-muted); font-size:0.82rem">Sem imagens</div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+        </div>
+      <% } else { %>
+        <div class="empty-state animate-in">
+          <div class="empty-icon"><i class="bi bi-journal-plus"></i></div>
+          <div class="empty-title">Nenhum capítulo</div>
+          <div class="empty-desc">Adicione um capítulo usando o formulário acima</div>
+        </div>
+      <% } %>
+    </section>
+  </main>
+
+  <%- include('partials/footer') %>
+  <!-- Extractions modal -->
+  <div class="modal fade" id="extractionsModal" tabindex="-1" aria-labelledby="extractionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="extractionsModalLabel"><i class="bi bi-file-earmark-text me-2"></i>Extrações</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div id="extractionsModalBody">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <%- include('partials/scripts') %>
