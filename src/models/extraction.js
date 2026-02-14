@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Extraction = sequelize.define('Extraction', {
-    imagemId: { type: DataTypes.INTEGER.UNSIGNED, allowNull: false },
+    imagemId: { type: DataTypes.INTEGER, allowNull: false },
     bbox: { type: DataTypes.JSON, allowNull: true },
     text: { type: DataTypes.TEXT, allowNull: true },
     confidence: { type: DataTypes.FLOAT, allowNull: true },

@@ -12,6 +12,8 @@ obras/
 
 # Banco de dados
 db.sql
+database/
+!database/.gitkeep
 
 # Logs
 npm-debug.log

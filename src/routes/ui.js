@@ -26,11 +26,11 @@ router.get('/obra/:id', async (req, res) => {
     if (!obra) return res.status(404).send('Obra não encontrada');
 
     // fetch capitulos ordered in the database: try numeric order by `number`, fallback to id
-    // We use (number+0) to coerce numeric strings in MySQL; then id desc as tiebreaker
+    // We use CAST to coerce numeric strings for ordering; then id desc as tiebreaker
     const capitulos = await Capitulo.findAll({
       where: { obraId: obra.id },
       include: [{ model: Imagem, as: 'Imagens' }],
-      order: [[sequelize.literal('(number+0)'), 'DESC'], ['id', 'DESC']]
+      order: [[sequelize.literal('CAST("number" AS INTEGER)'), 'DESC'], ['id', 'DESC']]
     });
 
     // compute status summary + extraction/translation summary for each capitulo
@@ -114,7 +114,7 @@ router.get('/obra/:id/cap/:capId/reader', async (req, res) => {
   // fetch all chapters for prev/next navigation
   const allCaps = await Capitulo.findAll({
     where: { obraId: obra.id },
-    order: [[sequelize.literal('(number+0)'), 'ASC'], ['id', 'ASC']],
+    order: [[sequelize.literal('CAST("number" AS INTEGER)'), 'ASC'], ['id', 'ASC']],
     attributes: ['id', 'number']
   });
   const capIdx = allCaps.findIndex(c => c.id === cap.id);

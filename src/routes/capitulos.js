@@ -279,7 +279,7 @@ router.get('/poll', async (req, res) => {
     const capitulos = await Capitulo.findAll({
       where: { obraId },
       include: [{ model: Imagem, as: 'Imagens' }],
-      order: [[require('sequelize').literal('(number+0)'), 'DESC'], ['id', 'DESC']]
+      order: [[require('sequelize').literal('CAST("number" AS INTEGER)'), 'DESC'], ['id', 'DESC']]
     });
 
     const result = [];

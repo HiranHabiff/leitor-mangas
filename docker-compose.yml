@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "${DB_PORT:-5432}:${DB_DOCKER_PORT:-5432}"
+    environment:
+      POSTGRES_DB: ${DB_NAME:-leitor_db}
+      POSTGRES_USER: ${DB_USER:-leitor}
+      POSTGRES_PASSWORD: ${DB_PASS:-leitor123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - ./database:/var/lib/postgresql/data

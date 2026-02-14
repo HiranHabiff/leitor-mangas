@@ -33,7 +33,7 @@ Sistema completo para **download, extração de texto (OCR), tradução e leitur
 | Camada | Stack |
 |---|---|
 | Backend | Node.js, Express 4, EJS |
-| Banco de dados | MySQL 5.7+, Sequelize 6 |
+| Banco de dados | PostgreSQL 16, Sequelize 6 |
 | OCR | Google Cloud Vision API |
 | Tradução | Google Cloud Translation API v2 |
 | HTTP | Axios |
@@ -44,7 +44,7 @@ Sistema completo para **download, extração de texto (OCR), tradução e leitur
 ## Pré-requisitos
 
 - **Node.js** >= 16
-- **MySQL** 5.7+
+- **Docker** e **Docker Compose** (para o banco de dados)
 - **Google Cloud** — Service Account com Vision API e Translation API habilitadas
 - **Google Chrome** (para a extensão)
 
@@ -67,15 +67,30 @@ npm install
 
 ### 3. Configurar variáveis de ambiente
 
-Crie um arquivo `.env` na raiz:
+Copie o arquivo de exemplo e ajuste conforme necessário:
+
+```bash
+cp .env.example .env
+```
+
+Variáveis disponíveis:
 
 ```env
-DB_USER=root
-DB_PASS=sua_senha
-DB_NAME=leitor_db
+# PostgreSQL — conexão
 DB_HOST=127.0.0.1
-DB_PORT=3306
+DB_PORT=5432
+DB_NAME=leitor_db
+DB_USER=leitor
+DB_PASS=leitor123
+
+# Docker — porta externa mapeada para o container
+DB_DOCKER_PORT=5432
+
+# App
 PORT=3000
+
+# Google Cloud
+GOOGLE_APPLICATION_CREDENTIALS=./config/service-account.json
 ```
 
 ### 4. Configurar Google Cloud
@@ -84,15 +99,23 @@ Coloque o arquivo de credenciais em `config/service-account.json`. A Service Acc
 - Cloud Vision API User
 - Cloud Translation API User
 
-### 5. Criar o banco de dados
+### 5. Subir o banco de dados (Docker)
 
 ```bash
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS leitor_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+docker compose up -d
 ```
 
-O Sequelize sincroniza automaticamente as tabelas ao iniciar o servidor.
+Isso inicia um container PostgreSQL 16 com os dados persistidos na pasta `database/`.
 
-### 6. Iniciar o servidor
+### 6. Executar as migrations
+
+```bash
+npm run migrate
+```
+
+Isso cria as tabelas `obras`, `capitulos`, `imagens` e `extractions` no PostgreSQL.
+
+### 7. Iniciar o servidor
 
 ```bash
 npm start
@@ -127,6 +150,10 @@ O pipeline automático inicia o download e extração OCR em background.
 ## Estrutura do Projeto
 
 ```
+├── .env.example             # Template de variáveis de ambiente
+├── .sequelizerc             # Config do Sequelize CLI
+├── docker-compose.yml       # PostgreSQL 16 via Docker
+├── package.json
 ├── config/                  # Configuração do banco e credenciais
 │   ├── config.js
 │   └── service-account.json
@@ -137,22 +164,22 @@ O pipeline automático inicia o download e extração OCR em background.
 │   ├── shared.js
 │   ├── sidebar.html/js/css
 │   └── icons/
+├── database/                # Volume local do PostgreSQL (Docker)
 ├── migrations/              # Migrations Sequelize
 ├── obras/                   # Imagens baixadas (slug/cap_N/)
 ├── src/
 │   ├── app.js               # Entry point Express
-│   ├── downloader.js         # Download com concorrência e retry
-│   ├── pipeline.js           # Pipeline automático (download → OCR)
-│   ├── translator.js         # OCR + tradução via Google Cloud
-│   ├── models/               # Sequelize models (Obra, Capitulo, Imagem, Extraction)
+│   ├── downloader.js        # Download com concorrência e retry
+│   ├── pipeline.js          # Pipeline automático (download → OCR)
+│   ├── translator.js        # OCR + tradução via Google Cloud
+│   ├── models/              # Sequelize models (Obra, Capitulo, Imagem, Extraction)
 │   ├── routes/
-│   │   ├── api.js            # API REST para extensão
-│   │   ├── capitulos.js      # CRUD capítulos + download/extract/translate
-│   │   ├── obras.js          # CRUD obras
-│   │   └── ui.js             # Rotas das views EJS
-
-│   ├── views/                # Templates EJS
-│   └── public/               # CSS e JS do frontend
+│   │   ├── api.js           # API REST para extensão
+│   │   ├── capitulos.js     # CRUD capítulos + download/extract/translate
+│   │   ├── obras.js         # CRUD obras
+│   │   └── ui.js            # Rotas das views EJS
+│   ├── views/               # Templates EJS
+│   └── public/              # CSS e JS do frontend
 └── package.json
 ```
 
@@ -163,9 +190,13 @@ O pipeline automático inicia o download e extração OCR em background.
 | Comando | Descrição |
 |---|---|
 | `npm start` | Inicia o servidor na porta 3000 |
-| `npm run dev` | Inicia em modo desenvolvimento |
+| `npm run dev` | Inicia em modo desenvolvimento (com `cross-env`) |
 | `npm run migrate` | Executa migrations pendentes |
+| `npm run migrate:undo` | Desfaz a última migration |
+| `npm run migrate:status` | Exibe status das migrations |
 | `npm test` | Executa testes com Jest |
+| `docker compose up -d` | Inicia o PostgreSQL via Docker |
+| `docker compose down` | Para o PostgreSQL |
 
 ---
 

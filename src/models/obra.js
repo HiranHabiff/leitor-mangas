@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Obra = sequelize.define('Obra', {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },

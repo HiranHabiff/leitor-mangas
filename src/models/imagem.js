@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const Imagem = sequelize.define('Imagem', {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true
     },
@@ -10,7 +10,7 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true
     },
     order: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       allowNull: true
     },
     url: {

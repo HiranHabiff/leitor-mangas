@@ -44,8 +44,6 @@ const PORT = process.env.PORT || 3000;
   try {
     await sequelize.authenticate();
     console.log('DB connection OK');
-    // Em dev: sincroniza tabelas automaticamente. Em produção, usar migrations.
-    await sequelize.sync();
     app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
   } catch (err) {
     console.error('Failed to start app:', err);
